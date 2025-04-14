@@ -121,7 +121,6 @@ void appendLength(string &bitMessage, uint64_t originalLength) {
 // Input is the bitString or bitMessage which is a string consisting of '0' and '1's
 // Output is a 2D vector. Outer vector represents number of blocks of multiples of 512
 // Inner vector represents a block of 16 words each(each word is 32 bit)
-
 vector<vector<uint32_t>> splitIntoBlocks(const string &bitString) {
     const size_t blockSize = 512;      // bits per block
     const size_t wordSize = 32;        // bits per word
@@ -156,6 +155,7 @@ vector<vector<uint32_t>> splitIntoBlocks(const string &bitString) {
             for (size_t b = 0; b < bytesPerWord; b++) {
 
                 // Main Extraction is being performed here for extracting the 32 bit word from the string accoridngly
+                // Calculating the starting position of the current byte within the bit string.
                 size_t byteStart = blockStart + ((w * bytesPerWord) + b) * 8;
                 uint8_t byteVal = 0;
                 // For loop here for processing 8 bits for this byte.
@@ -165,9 +165,11 @@ vector<vector<uint32_t>> splitIntoBlocks(const string &bitString) {
                         // Throws/Raises an exception when we get an invalid character except 0 and 1
                         throw invalid_argument("Invalid character in bit string.");
                     }
-                    byteVal = (byteVal << 1) | (c - '0');
-                }
-                // Little-endian: shift the byte by 8*b i,e then being stored as a 32 bit word
+                     // Shift the current byte left by 1 bit and append the new bit (0 or 1).
+                     byteVal = (byteVal << 1) | (c - '0');
+                    }
+                // Convert the byte into its position in the 32-bit word.
+                // Little-endian: shift the byte by 8 * b to its appropriate position.
                 word |= static_cast<uint32_t>(byteVal) << (8 * b);
             }
             // for string the word i.e 32 bit word
@@ -208,9 +210,9 @@ uint32_t leftrotate(uint32_t x, uint32_t n) {
 // Updates the MD5Buffer state using the current block of 16, 32-bit words.
 // This function is performed iteratively for each block
 // The final values are updated to md5buffer and then are used for final hash values
-// Here the inputs are MD5buffer used here and the X is the block - current message block(512 bits)
+// Here the inputs are MD5buffer used here and the block - current message block(512 bits)
 void transformBlock(MD5Buffer &md5buffer, const vector<uint32_t> &block) {
-    // T: Constants derived from the sine function, defined in Step 3.4
+    // T: Constants derived from the sine function, defined in Step 3.4 - abs(sin(i + 1)) × 2^32
     static const uint32_t T[64] = {
         0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
         0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
@@ -247,7 +249,8 @@ void transformBlock(MD5Buffer &md5buffer, const vector<uint32_t> &block) {
 
     // Process the block in 64 rounds.
     for (int i = 0; i < 64; i++) {
-        uint32_t f, g;  // f is the result of the non-linear function; g determines the index of the word in block.
+        uint32_t f, g;  
+        // f is the result of the non-linear function; g determines the index of the word in block.
         // Rounds 0-15 (first 16 rounds)
         if (i < 16) {
             f = F(b, c, d); 

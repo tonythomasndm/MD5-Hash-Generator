@@ -1,116 +1,80 @@
-# Implementation of the Distinguishing Attack with Integral Cryptanalysis against 3-Round AES
+# MD5 Hash Generator in C++
 
-This project demonstrates how to distinguish between a 3-round AES encryption oracle and a random permutation oracle using integral cryptanalysis. The attack exploits a property of 3-round AES where the XOR sum of ciphertexts from 256 specially crafted plaintexts is expected to be zero. In contrast, a random permutation will almost never produce a zero XOR sum.
+This TC assignment is a complete implementation of the MD5 hashing algorithm in C++. The program takes input either as a string or from a file, processes it according to the MD5 algorithm, and outputs the resulting hash in hexadecimal format. 
 
----
+## Code Structure
 
-## 1. AES Encryption Tool
+### MD5Buffer Class
 
-### Overview
+The `MD5Buffer` class maintains the 128-bit state of the MD5 hash, split into four 32-bit registers: A, B, C, and D. It provides:
 
-The AES Encryption Tool is implemented in the `AESEncryption.py` file. It provides:
-- **AES Encryption Function:** Encrypts a 128-bit plaintext using a 128-bit key for a specified number of rounds.
-- **AES Encryption Oracle:** The `aesEncryptOracle` function encrypts plaintexts using 3-round AES and returns a 128-bit ciphertext as an integer.
+- `initialize()`: Sets the initial state values as defined in the MD5 specification.
+- `update(uint32_t a, uint32_t b, uint32_t c, uint32_t d)`: Updates the state after processing a block.
+- `toHexString()`: Converts the final state into a hexadecimal string for output.
 
-### Input & Output
+### Padding and Length Appending
 
-- **Input:**
-  - Plaintext: 32-character hexadecimal string (16 bytes).
-  - Key: 32-character hexadecimal string (16 bytes).
-  - Rounds: Integer specifying the number of AES rounds (3 for this attack).
-- **Output:**
-  - Ciphertext: 32-character hexadecimal string.
+- `paddingMessage(string &bitMessage)`: Pads the input so its length is congruent to 448 modulo 512, followed by a single '1' bit and the necessary '0' bits.
+- `appendLength(string &bitMessage, uint64_t originalLength)`: Appends the original message length (in bits) as a 64-bit value in little-endian format.
 
-### How to Run
+### Block Splitting
 
-1. **Install required packages:**
-    ```bash
-    pip install numpy
-    ```
-2. **Run the AES Encryption Tool:**
-    ```bash
-    python AESEncryption.py
-    ```
-3. **Example Output:**
-    ```
-    Enter the plain text (32 hex digits): 3243f6a8885a308d313198a2e0370734
-    Enter the cipher key (32 hex digits): 2b7e151628aed2a6abf7158809cf4f3c
-    Enter the number of rounds: 10
-    Encrypted Cipher Text: 3925841d02dc09fbdc118597196a0b32
-    ```
+- `splitIntoBlocks(const string &bitString)`: Divides the padded message into 512-bit blocks. Each block is further split into 16 words (32 bits each).
 
----
+### MD5 Transformation
 
-## 2. Random Permutation Oracle
+- `transformBlock(MD5Buffer &md5buffer, const vector<uint32_t> &block)`: Processes each 512-bit block through 64 transformation rounds. It uses non-linear functions, constants, and bitwise operations to update the MD5 state cumulatively.
 
-### Overview
+### Auxiliary Functions
 
-The Random Permutation Oracle is implemented in `RandomPermutation.py`. It generates a unique 128-bit random ciphertext for each plaintext, simulating a random permutation. The updated implementation also includes an interactive mode for user input.
+- Non-linear functions: `F`, `G`, `H`, and `I` as defined in the pdf Step 3.4.
+- `leftrotate(uint32_t x, uint32_t n)`: Performs a left-rotate operation on a 32-bit integer.
 
-### Input & Output
+### Main Function Workflow
 
-- **Input:**
-  - Plaintext: 32-character hexadecimal string (16 bytes).
-- **Output:**
-  - Ciphertext: 128-bit integer (displayed as a hexadecimal string).
+The main function orchestrates the entire process:
 
-### How to Run
+1. **Input Handling**: Allows the user to choose between entering a string or reading from a file.
+2. **Binary Conversion**: Converts the input to an 8-bit binary representation.
+3. **Padding and Length Appending**: Prepares the input for processing by the MD5 algorithm.
+4. **Block Processing**: Processes each 512-bit block through the transformation function.
+5. **Final Output**: Displays the computed MD5 hash in hexadecimal format.
 
-1. **Run the Random Permutation Oracle:**
-    ```bash
-    python RandomPermutation.py
-    ```
-2. **Example Output:**
-    ```
-    Enter the plain text (32 hex digits): 0123456789abcdef0123456789abcdef
-    The cipher text is: 0x5e2f3c1a9b7d4e8f0123456789abcdef
-    ```
+## How to Compile and Run
 
----
+### Compilation
 
-## 3. Distinguisher Attack
-
-### Overview
-
-The Distinguisher Attack is implemented in `DistinguisherAttack.py`. It follows these steps:
-1. Generate 256 plaintexts by varying one byte of a base plaintext.
-2. Query the AES encryption oracle and the random permutation oracle.
-3. Compute the XOR sum of the ciphertexts.
-4. Distinguish between AES and a random permutation based on the XOR result.
-
-### Input & Output
-
-- **Input:**
-  - Base Plaintext: 128-bit integer.
-  - Key: 128-bit integer.
-  - Rounds: Fixed to 3 for AES.
-- **Output:**
-  - XOR Sum: 128-bit integer.
-  - Result: A message indicating whether the oracle is likely a 3-round AES or a random permutation.
-
-### How to Run
-
-1. **Ensure all files are in the same directory:**
-    - `AESEncryption.py`
-    - `RandomPermutation.py`
-    - `DistinguisherAttack.py`
-2. **Run the Distinguisher Attack:**
-    ```bash
-    python DistinguisherAttack.py
-    ```
-3. **Example Output:**
-```
-AES Oracle (3-round AES) Attack:
-XOR sum of ciphertexts: 0x00000000000000000000000000000000
-Result: Likely 3-round AES encryption (integral property holds).
-
-Random Permutation Oracle Attack:
-XOR sum of ciphertexts: 0x8f23c4a1d5b67890ef1234567890abcd
-Result: Likely a random permutation (integral property does not hold).
+To compile the program, open a terminal in the directory containing the source file (e.g., `md5.cpp`) and run:
+```bash
+g++ -o md5 md5.cpp
 ```
 
----
+### Execution
 
-## Conclusion
+Run the compiled program:
+```bash
+./md5
+```
+You will be prompted to select the input method:
+- Enter `1` to input a string directly.
+- Enter `2` to specify a file from which the input will be read.
 
-This project demonstrates the effectiveness of the distinguishing attack using integral cryptanalysis on 3-round AES. By analyzing the XOR sum of ciphertexts, the attack can reliably differentiate between a 3-round AES encryption oracle and a random permutation oracle.
+### Example Usage
+
+#### Direct String Input
+```plaintext
+Enter 1 for string input or 2 for file input: 
+
+> 1
+Enter the string: Hello, World!
+MD5 Hash: 65a8e27d8879283831b664bd8b7f0ad4
+```
+
+#### File Input
+```plaintext
+Enter 1 for string input or 2 for file input: 
+
+> 2
+Enter the filename: input.txt
+MD5 Hash: 65a8e27d8879283831b664bd8b7f0ad4
+```

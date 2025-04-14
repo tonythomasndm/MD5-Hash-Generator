@@ -251,6 +251,7 @@ void transformBlock(MD5Buffer &md5buffer, const vector<uint32_t> &block) {
     for (int i = 0; i < 64; i++) {
         uint32_t f, g;  
         // f is the result of the non-linear function; g determines the index of the word in block.
+        // as defined on the site
         // Rounds 0-15 (first 16 rounds)
         if (i < 16) {
             f = F(b, c, d); 
